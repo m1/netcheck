@@ -1,1 +1,7 @@
-target/
+.github
+charts
+target
+.editorconfig
+.gitignore
+README.md
+Dockerfile

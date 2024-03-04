@@ -1,13 +1,15 @@
 # syntax=docker/dockerfile:1
-ARG ALPINE_VERSION=3.18
+ARG ALPINE_VERSION=3.19
 ARG RUST_VERSION=1.76.0
 
 FROM docker.io/library/rust:${RUST_VERSION}-alpine${ALPINE_VERSION} as builder
-RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static
 
-WORKDIR /app
-COPY . .
-RUN cargo build --release
+RUN apk add --no-cache musl-dev=1.2.4_git20230717-r4 \
+                       openssl-dev=3.1.4-r5  \
+                       openssl-libs-static=3.1.4-r5
+
+COPY . /app/
+RUN cd app && cargo build --release
 
 FROM scratch AS runtime
 

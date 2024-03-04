@@ -2,15 +2,17 @@
 
 Netcheck is a tool to check the availability of a group of network connections.
 
-Exposes metrics for Prometheus so can be used to monitor the availability of a network and alert (via alertmanager) when it is not available.
+Exposes metrics for Prometheus so can be used to monitor the availability of a network and alert (via alertmanager) when
+it is not available.
 
 ## Use cases
 
 - Check if a list of networks/services are available.
-- Check if an internal network can reach an external network (This was used internally to check if a kubernetes cluster and istio mesh can readily and repeatability
+- Check if an internal network can reach an external network (This was used internally to check if a kubernetes cluster
+  and istio mesh can readily and repeatability
   reach an external network and alert when it can not).
 - Check if a network is available from a specific location.
-- Simple pingdom/uptime alternative. 
+- Simple pingdom/uptime alternative.
 - This is **not** intended to replace a full monitoring solution, but as part of your network availability tooling.
 - This is **not** intended to be used as a load testing (ie ab, siege, wrk etc) tool.
 
@@ -66,6 +68,7 @@ Options:
 ```
 
 Example, targetting an external network, and an internal network:
+
 ```shell
 ./netcheck run --target external=https://one.one.one.one,https://dns.google --target internal=http://hellosvc.test.svc.cluster.local:9111,http://hello2svc.test.svc.cluster.local:9111
 ```
