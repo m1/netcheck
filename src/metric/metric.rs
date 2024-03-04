@@ -8,11 +8,11 @@ pub const KEY_EVENTS: &str = "events";
 pub const KEY_REQUESTS: &str = "requests";
 pub const KEY_REQUESTS_RESPONSE_TIME_NS: &str = "requests_response_time_ns";
 pub const KEY_TARGET_STATUS: &str = "target_status";
+
 pub const LABEL_EVENTS_STATUS: &str = "status";
 pub const LABEL_EVENTS_TARGET_NAME: &str = "target_name";
 pub const LABEL_EVENTS_TARGET_URL: &str = "url";
 pub const LABEL_TARGET_URLS: &str = "urls";
-
 pub const LABEL_NETCHECK_VERSION: &str = "version";
 pub const LABEL_NETCHECK_STARTED_AT: &str = "started_at";
 

@@ -8,6 +8,8 @@ license = "MIT"
 repository = "https://github.com/m1/netcheck"
 readme = "README.md"
 build = "build.rs"
+keywords= ["network", "networking", "monitoring", "observability", "availability"]
+categories = ["development-tools", "development-tools::debugging", "network-programming", "command-line-utilities"]
 
 [badges]
 travis-ci = { repository = "m1/netcheck" }

@@ -16,12 +16,12 @@ use crate::metric::{
     LABEL_EVENTS_TARGET_NAME,
     LABEL_EVENTS_TARGET_URL,
     LABEL_TARGET_URLS,
-    VALUE_EVENT_STATUS_UNAVAILABLE,
-    VALUE_EVENT_STATUS_UNAVAILABLE_TO_AVAILABLE,
-    VALUE_EVENT_STATUS_FAILURE,
-    VALUE_EVENT_STATUS_SUCCESS,
     VALUE_EVENT_STATUS_AVAILABLE,
     VALUE_EVENT_STATUS_AVAILABLE_TO_UNAVAILABLE,
+    VALUE_EVENT_STATUS_FAILURE,
+    VALUE_EVENT_STATUS_SUCCESS,
+    VALUE_EVENT_STATUS_UNAVAILABLE,
+    VALUE_EVENT_STATUS_UNAVAILABLE_TO_AVAILABLE,
 };
 use crate::runner::{Event, Status};
 use crate::runner::target::Target;
@@ -123,6 +123,7 @@ impl Runner {
             .connect_timeout(Duration::from_millis(self.connect_timeout_ms))
             .build()
     }
+
     #[tracing::instrument(level = "debug")]
     async fn check_url(&self, url: Url, client: Client, status: &mut Status, target: String) -> bool {
         let start = Instant::now();
@@ -150,6 +151,7 @@ impl Runner {
             }
         };
     }
+
     fn should_stop(&self, started: Instant, iterations: i32) -> bool {
         if let Some(run_for_iterations) = self.run_for_iterations {
             if iterations >= run_for_iterations as i32 {
@@ -165,6 +167,7 @@ impl Runner {
 
         false
     }
+
     async fn handle_response_error(&self, err: Error, target: String, url: Url, start: Instant, status: &mut Status) {
         debug!(runner_target = target, url = url.to_string(), err = err.to_string(), resp_ns = start.elapsed().as_nanos(), "tick failure");
         self.update_request_metrics(false, &start, target.clone(), url.clone());
@@ -185,6 +188,7 @@ impl Runner {
             }
         }
     }
+
     async fn handle_response_ok(&self, target: String, url: Url, start: Instant, status: &mut Status) {
         debug!(runner_target = target, url = url.to_string(), resp_ns = start.elapsed().as_nanos(), "tick success");
         self.update_request_metrics(true, &start, target.clone(), url.clone());
@@ -217,32 +221,32 @@ impl Runner {
         };
 
         counter!(
-        KEY_REQUESTS,
-        LABEL_EVENTS_STATUS => status,
-        LABEL_EVENTS_TARGET_NAME => target.to_string(),
-        LABEL_EVENTS_TARGET_URL => url.to_string(),
-    ).increment(1);
+            KEY_REQUESTS,
+            LABEL_EVENTS_STATUS => status,
+            LABEL_EVENTS_TARGET_NAME => target.to_string(),
+            LABEL_EVENTS_TARGET_URL => url.to_string(),
+        ).increment(1);
 
         histogram!(
-        KEY_REQUESTS_RESPONSE_TIME_NS,
-        LABEL_EVENTS_STATUS => status,
-        LABEL_EVENTS_TARGET_NAME => target.to_string(),
-        LABEL_EVENTS_TARGET_URL => url.to_string(),
-    ).record(started.elapsed().as_nanos() as f64);
+            KEY_REQUESTS_RESPONSE_TIME_NS,
+            LABEL_EVENTS_STATUS => status,
+            LABEL_EVENTS_TARGET_NAME => target.to_string(),
+            LABEL_EVENTS_TARGET_URL => url.to_string(),
+        ).record(started.elapsed().as_nanos() as f64);
 
         gauge!(
-        KEY_TARGET_STATUS,
-        LABEL_EVENTS_TARGET_NAME => target.to_string(),
-        LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_AVAILABLE,
-        LABEL_TARGET_URLS => vec_to_string(self.target.urls.clone()),
-    ).set(if success { 1. } else { 0. });
+            KEY_TARGET_STATUS,
+            LABEL_EVENTS_TARGET_NAME => target.to_string(),
+            LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_AVAILABLE,
+            LABEL_TARGET_URLS => vec_to_string(self.target.urls.clone()),
+        ).set(if success { 1. } else { 0. });
 
         gauge!(
-        KEY_TARGET_STATUS,
-        LABEL_EVENTS_TARGET_NAME => target.to_string(),
-        LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_UNAVAILABLE,
-        LABEL_TARGET_URLS => vec_to_string(self.target.urls.clone()),
-    ).set(if success { 0. } else { 1. });
+            KEY_TARGET_STATUS,
+            LABEL_EVENTS_TARGET_NAME => target.to_string(),
+            LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_UNAVAILABLE,
+            LABEL_TARGET_URLS => vec_to_string(self.target.urls.clone()),
+        ).set(if success { 0. } else { 1. });
     }
 }
 
