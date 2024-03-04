@@ -1,0 +1,45 @@
+[package]
+name = "netcheck"
+version = "0.0.1"
+edition = "2021"
+authors = ["Miles Croxford <hello@milescroxford.com>"]
+description = "A simple network checker"
+license = "MIT"
+repository = "https://github.com/m1/netcheck"
+readme = "README.md"
+build = "build.rs"
+
+[badges]
+travis-ci = { repository = "m1/netcheck" }
+codecov = { repository = "m1/netcheck" }
+docs-rs = { repository = "m1/netcheck" }
+crates-io = { repository = "m1/netcheck" }
+maintenance = { status = "actively-developed" }
+
+[dependencies]
+chrono = { version = "0.4.34", features = [] }
+clap = { version = "4.5.1", features = ["derive"] }
+metrics = { version = "0.22.1", features = [] }
+metrics-exporter-prometheus = { version = "0.13.1", features = ["http-listener", "tokio"] }
+rand = { version = "0.9.0-alpha.0", features = [] }
+reqwest = { version = "0.11.24", features = [] }
+thiserror = { version = "1.0.57", features = [] }
+tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros", "time"] }
+tracing = { version = "0.1.40", features = ["log", "std", ] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt", "std", "serde", "json", "serde_json", "time", "thread_local", ] }
+pretty_assertions = "1.4.0"
+
+[build-dependencies]
+built = { version = "0.7.1", features = [] }
+
+[dev-dependencies]
+grcov = { version = "0.8.19", features = [] }
+pretty_assertions = { version = "1.1.0", features = [] }
+httpmock = { version = "0.7.0", features = [] }
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "netcheck"
+path = "src/bin/cli.rs"

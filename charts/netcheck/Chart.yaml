@@ -1,0 +1,12 @@
+apiVersion: v2
+name: netcheck
+description: Netcheck is a tool to check the availability of a group of network connections.
+type: application
+version: 0.0.1
+appVersion: "0.0.1"
+home: https://github.com/m1/netcheck
+sources:
+  - https://github.com/m1/netcheck
+maintainers:
+  - name: Miles Croxford
+    email: hello@milescroxford.com

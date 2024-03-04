@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/def",
+  "definitions": {
+    "def": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/Image"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Target"
+          }
+        },
+        "verbose": {
+          "type": "boolean"
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": [
+            "trace",
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ]
+        },
+        "timeoutMs": {
+          "type": "integer"
+        },
+        "waitTimeSeconds": {
+          "type": "integer"
+        },
+        "connectTimeoutMs": {
+          "type": "integer"
+        },
+        "failureThreshold": {
+          "type": "integer"
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {}
+        },
+        "nameOverride": {
+          "type": "string"
+        },
+        "fullnameOverride": {
+          "type": "string"
+        },
+        "serviceAccount": {
+          "$ref": "#/definitions/ServiceAccount"
+        },
+        "podAnnotations": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "podSecurityContext": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "securityContext": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "service": {
+          "$ref": "#/definitions/Service"
+        },
+        "resources": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "nodeSelector": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {}
+        },
+        "affinity": {
+          "$ref": "#/definitions/Affinity"
+        }
+      },
+      "required": [
+        "affinity",
+        "connectTimeoutMs",
+        "failureThreshold",
+        "fullnameOverride",
+        "image",
+        "imagePullSecrets",
+        "logLevel",
+        "nameOverride",
+        "nodeSelector",
+        "podAnnotations",
+        "podSecurityContext",
+        "resources",
+        "securityContext",
+        "service",
+        "serviceAccount",
+        "targets",
+        "timeoutMs",
+        "tolerations",
+        "verbose",
+        "waitTimeSeconds"
+      ],
+      "title": "Welcome3"
+    },
+    "Affinity": {
+      "type": "object",
+      "additionalProperties": false,
+      "title": "Affinity"
+    },
+    "Image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "type": "string"
+        },
+        "pullPolicy": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string",
+          "format": "integer"
+        }
+      },
+      "required": [
+        "pullPolicy",
+        "repository",
+        "tag"
+      ],
+      "title": "Image"
+    },
+    "Service": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "metrics_port": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "metrics_port",
+        "type"
+      ],
+      "title": "Service"
+    },
+    "Target": {
+      "type": "object",
+      "additionalProperties": false,
+      "title": "Target",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "urls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ServiceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "annotations": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "annotations",
+        "create",
+        "name"
+      ],
+      "title": "ServiceAccount"
+    }
+  }
+}
