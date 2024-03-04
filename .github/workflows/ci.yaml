@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0
       - uses: Swatinem/rust-cache@v2
       - name: rust fmt
-        uses: cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
       - name: super linter
         uses: super-linter/super-linter@v6.3.0
         env:
