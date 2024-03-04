@@ -35,7 +35,8 @@ impl Status {
             if self.available_counted >= self.threshold {
                 self.is_unavailable = false;
                 self.unavailable_counted = 0;
-                let evt = Event::UnavailableToAvailable(chrono::Utc::now() - self.unavailable_started);
+                let evt =
+                    Event::UnavailableToAvailable(chrono::Utc::now() - self.unavailable_started);
                 self.unavailable_events.push(evt);
 
                 return evt;
@@ -101,7 +102,9 @@ mod tests {
         assert_eq!(status.handle_available(), Event::NoChange);
         assert_eq!(status.handle_available(), Event::NoChange);
         match status.handle_available() {
-            Event::UnavailableToAvailable(duration) => assert!(duration.num_nanoseconds().expect("should unwrap") > 0),
+            Event::UnavailableToAvailable(duration) => {
+                assert!(duration.num_nanoseconds().expect("should unwrap") > 0)
+            }
             _ => panic!("Expected UnavailableToAvailable"),
         }
     }

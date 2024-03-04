@@ -25,22 +25,38 @@ pub const VALUE_EVENT_STATUS_UNAVAILABLE: &str = "unavailable";
 
 pub fn register_metrics(port: Option<u16>) {
     let port = port.unwrap_or(9000);
-    let builder = PrometheusBuilder::new()
-        .with_http_listener(([127, 0, 0, 1], port));
-    builder.install()
+    let builder = PrometheusBuilder::new().with_http_listener(([127, 0, 0, 1], port));
+    builder
+        .install()
         .expect("failed to install Prometheus recorder");
 
-    describe_gauge!(KEY_NETCHECK_RUNNING_STATUS, "The status of the netcheck service");
-    describe_counter!(KEY_REQUESTS, Unit::Count, "Counter of how many requests have taken place");
-    describe_counter!(KEY_EVENTS, Unit::Count, "Counter of how many events have taken place");
+    describe_gauge!(
+        KEY_NETCHECK_RUNNING_STATUS,
+        "The status of the netcheck service"
+    );
+    describe_counter!(
+        KEY_REQUESTS,
+        Unit::Count,
+        "Counter of how many requests have taken place"
+    );
+    describe_counter!(
+        KEY_EVENTS,
+        Unit::Count,
+        "Counter of how many events have taken place"
+    );
     describe_gauge!(KEY_TARGET_STATUS, "The status of the target");
-    describe_histogram!(KEY_REQUESTS_RESPONSE_TIME_NS, Unit::Nanoseconds, "The time taken to get a response from a request");
+    describe_histogram!(
+        KEY_REQUESTS_RESPONSE_TIME_NS,
+        Unit::Nanoseconds,
+        "The time taken to get a response from a request"
+    );
 
     gauge!(
         KEY_NETCHECK_RUNNING_STATUS,
         LABEL_NETCHECK_VERSION => built_info::PKG_VERSION,
         LABEL_NETCHECK_STARTED_AT => chrono::Utc::now().to_rfc3339(),
-    ).increment(1.);
+    )
+    .increment(1.);
 }
 
 #[cfg(test)]

@@ -28,7 +28,10 @@ impl Target {
     /// let target = Target::new("external".to_string(), vec![Url::parse("https://example.com").unwrap()]);
     ///
     /// ```
-    pub fn new(name: String, urls: Vec<Url>) -> Self {
+    pub fn new(
+        name: String,
+        urls: Vec<Url>,
+    ) -> Self {
         Self { name, urls }
     }
 }
@@ -54,15 +57,18 @@ impl FromStr for Target {
     fn from_str(str: &str) -> Result<Self, Self::Err> {
         match str.split_once("=") {
             Some((name, urls)) => {
-                let urls = urls.split(",").map(|url| {
-                    let u = if url.trim().starts_with("http") {
-                        url.trim().to_string()
-                    } else {
-                        format!("https://{}", url.trim())
-                    };
+                let urls = urls
+                    .split(",")
+                    .map(|url| {
+                        let u = if url.trim().starts_with("http") {
+                            url.trim().to_string()
+                        } else {
+                            format!("https://{}", url.trim())
+                        };
 
-                    Url::parse(u.as_str()).unwrap()
-                }).collect();
+                        Url::parse(u.as_str()).unwrap()
+                    })
+                    .collect();
                 Ok(Target::new(name.to_string(), urls))
             }
             None => Err(()),
@@ -71,12 +77,22 @@ impl FromStr for Target {
 }
 
 impl From<OsString> for Target {
-    fn from(str: OsString) -> Self { Target::from_str(str.to_str().unwrap()).unwrap() }
+    fn from(str: OsString) -> Self {
+        Target::from_str(str.to_str().unwrap()).unwrap()
+    }
 }
 
 impl fmt::Debug for Target {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Target {{ name: {}, urls: [{:?}] }}", self.name, vec_to_string(self.urls.clone()))
+    fn fmt(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+    ) -> fmt::Result {
+        write!(
+            f,
+            "Target {{ name: {}, urls: [{:?}] }}",
+            self.name,
+            vec_to_string(self.urls.clone())
+        )
     }
 }
 
@@ -88,23 +104,35 @@ mod tests {
 
     #[test]
     fn test_target_new() {
-        let target = Target::new("external".to_string(), vec![Url::parse("https://example.com").expect("failed to parse url")]);
+        let target = Target::new(
+            "external".to_string(),
+            vec![Url::parse("https://example.com").expect("failed to parse url")],
+        );
         assert_eq!(target.name, "external");
-        assert_eq!(target.urls[0], Url::parse("https://example.com").expect("failed to parse url"));
+        assert_eq!(
+            target.urls[0],
+            Url::parse("https://example.com").expect("failed to parse url")
+        );
     }
 
     #[test]
     fn test_target_from_str() {
         let target = Target::from_str("external=https://example.com").expect("failed to parse");
         assert_eq!(target.name, "external");
-        assert_eq!(target.urls[0], Url::parse("https://example.com").expect("failed to parse url"));
+        assert_eq!(
+            target.urls[0],
+            Url::parse("https://example.com").expect("failed to parse url")
+        );
     }
 
     #[test]
     fn test_target_from_str_append_https() {
         let target = Target::from_str("external=example.com").expect("failed to parse");
         assert_eq!(target.name, "external");
-        assert_eq!(target.urls[0], Url::parse("https://example.com").expect("failed to parse url"));
+        assert_eq!(
+            target.urls[0],
+            Url::parse("https://example.com").expect("failed to parse url")
+        );
     }
 
     #[test]
@@ -117,12 +145,21 @@ mod tests {
     fn test_target_from_os_string() {
         let target = Target::from(OsString::from("external=https://example.com"));
         assert_eq!(target.name, "external");
-        assert_eq!(target.urls[0], Url::parse("https://example.com").expect("failed to parse url"));
+        assert_eq!(
+            target.urls[0],
+            Url::parse("https://example.com").expect("failed to parse url")
+        );
     }
 
     #[test]
     fn test_target_debug() {
-        let target = Target::new("external".to_string(), vec![Url::parse("https://example.com").expect("failed to parse url")]);
-        assert_eq!(format!("{:?}", target), "Target { name: external, urls: [\"https://example.com/\"] }");
+        let target = Target::new(
+            "external".to_string(),
+            vec![Url::parse("https://example.com").expect("failed to parse url")],
+        );
+        assert_eq!(
+            format!("{:?}", target),
+            "Target { name: external, urls: [\"https://example.com/\"] }"
+        );
     }
 }

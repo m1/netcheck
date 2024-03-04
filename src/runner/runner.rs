@@ -8,24 +8,15 @@ use tracing::{debug, info};
 
 use crate::built_info;
 use crate::metric::{
-    KEY_EVENTS,
-    KEY_REQUESTS,
-    KEY_REQUESTS_RESPONSE_TIME_NS,
-    KEY_TARGET_STATUS,
-    LABEL_EVENTS_STATUS,
-    LABEL_EVENTS_TARGET_NAME,
-    LABEL_EVENTS_TARGET_URL,
-    LABEL_TARGET_URLS,
-    VALUE_EVENT_STATUS_AVAILABLE,
-    VALUE_EVENT_STATUS_AVAILABLE_TO_UNAVAILABLE,
-    VALUE_EVENT_STATUS_FAILURE,
-    VALUE_EVENT_STATUS_SUCCESS,
-    VALUE_EVENT_STATUS_UNAVAILABLE,
+    KEY_EVENTS, KEY_REQUESTS, KEY_REQUESTS_RESPONSE_TIME_NS, KEY_TARGET_STATUS,
+    LABEL_EVENTS_STATUS, LABEL_EVENTS_TARGET_NAME, LABEL_EVENTS_TARGET_URL, LABEL_TARGET_URLS,
+    VALUE_EVENT_STATUS_AVAILABLE, VALUE_EVENT_STATUS_AVAILABLE_TO_UNAVAILABLE,
+    VALUE_EVENT_STATUS_FAILURE, VALUE_EVENT_STATUS_SUCCESS, VALUE_EVENT_STATUS_UNAVAILABLE,
     VALUE_EVENT_STATUS_UNAVAILABLE_TO_AVAILABLE,
 };
-use crate::runner::{Event, Status};
 use crate::runner::target::Target;
 use crate::runner::url::vec_to_string;
+use crate::runner::{Event, Status};
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -59,7 +50,7 @@ pub struct Runner {
 impl Runner {
     /// Run the check on the target.
     #[tracing::instrument(level = "info")]
-    pub async fn run<>(&self) -> Result<(), Error> {
+    pub async fn run(&self) -> Result<(), Error> {
         let client = self.get_client()?;
         let runner = self.clone();
         let urls = self.target.urls.clone();
@@ -86,7 +77,13 @@ impl Runner {
     ///
     /// returns: ()
     #[tracing::instrument(level = "debug")]
-    async fn tick(&self, urls: Vec<Url>, client: Client, wait: u64, status: &mut Status) {
+    async fn tick(
+        &self,
+        urls: Vec<Url>,
+        client: Client,
+        wait: u64,
+        status: &mut Status,
+    ) {
         let mut interval = time::interval(Duration::from_secs(wait));
         let mut idx = 0;
         let target_name = self.target.name.clone();
@@ -100,13 +97,20 @@ impl Runner {
             }
 
             if idx >= urls.len() {
-                info!(runner_target = target_name, "target tick complete, {}/{} available", available_count, urls.len());
+                info!(
+                    runner_target = target_name,
+                    "target tick complete, {}/{} available",
+                    available_count,
+                    urls.len()
+                );
                 idx = 0;
                 available_count = 0;
             }
 
             let url = &urls[idx];
-            let is_available = self.check_url(url.clone(), client.clone(), status, target_name.clone()).await;
+            let is_available = self
+                .check_url(url.clone(), client.clone(), status, target_name.clone())
+                .await;
 
             available_count += if is_available { 1 } else { 0 };
             iterations += 1;
@@ -125,17 +129,24 @@ impl Runner {
     }
 
     #[tracing::instrument(level = "debug")]
-    async fn check_url(&self, url: Url, client: Client, status: &mut Status, target: String) -> bool {
+    async fn check_url(
+        &self,
+        url: Url,
+        client: Client,
+        status: &mut Status,
+        target: String,
+    ) -> bool {
         let start = Instant::now();
-        let resp = client.get(url.as_str())
-            .send()
-            .await;
+        let resp = client.get(url.as_str()).send().await;
 
         return match resp {
             Ok(resp) => {
                 if resp.status().is_server_error() || resp.status().is_client_error() {
-                    let status_error = Error::StatusError { status: resp.status().as_u16() };
-                    self.handle_response_error(status_error, target, url, start, status).await;
+                    let status_error = Error::StatusError {
+                        status: resp.status().as_u16(),
+                    };
+                    self.handle_response_error(status_error, target, url, start, status)
+                        .await;
 
                     return false;
                 }
@@ -145,14 +156,19 @@ impl Runner {
                 true
             }
             Err(err) => {
-                self.handle_response_error(Error::from(err), target, url, start, status).await;
+                self.handle_response_error(Error::from(err), target, url, start, status)
+                    .await;
 
                 false
             }
         };
     }
 
-    fn should_stop(&self, started: Instant, iterations: i32) -> bool {
+    fn should_stop(
+        &self,
+        started: Instant,
+        iterations: i32,
+    ) -> bool {
         if let Some(run_for_iterations) = self.run_for_iterations {
             if iterations >= run_for_iterations as i32 {
                 return true;
@@ -168,8 +184,21 @@ impl Runner {
         false
     }
 
-    async fn handle_response_error(&self, err: Error, target: String, url: Url, start: Instant, status: &mut Status) {
-        debug!(runner_target = target, url = url.to_string(), err = err.to_string(), resp_ns = start.elapsed().as_nanos(), "tick failure");
+    async fn handle_response_error(
+        &self,
+        err: Error,
+        target: String,
+        url: Url,
+        start: Instant,
+        status: &mut Status,
+    ) {
+        debug!(
+            runner_target = target,
+            url = url.to_string(),
+            err = err.to_string(),
+            resp_ns = start.elapsed().as_nanos(),
+            "tick failure"
+        );
         self.update_request_metrics(false, &start, target.clone(), url.clone());
 
         match status.handle_unavailable() {
@@ -177,29 +206,57 @@ impl Runner {
                 counter!(KEY_EVENTS,
                             LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_AVAILABLE_TO_UNAVAILABLE,
                     LABEL_EVENTS_TARGET_NAME => target.clone(),
-                ).increment(1);
-                info!(runner_target = target, url = url.to_string(), "available to unavailable");
+                )
+                .increment(1);
+                info!(
+                    runner_target = target,
+                    url = url.to_string(),
+                    "available to unavailable"
+                );
             }
             _ => {
                 if status.is_unavailable {
                     let diff = chrono::Utc::now().signed_duration_since(status.unavailable_started);
-                    info!(runner_target = target, url = url.to_string(), time_delta = diff.to_string(), "still unavailable, unavailable for {}s", diff.num_seconds());
+                    info!(
+                        runner_target = target,
+                        url = url.to_string(),
+                        time_delta = diff.to_string(),
+                        "still unavailable, unavailable for {}s",
+                        diff.num_seconds()
+                    );
                 }
             }
         }
     }
 
-    async fn handle_response_ok(&self, target: String, url: Url, start: Instant, status: &mut Status) {
-        debug!(runner_target = target, url = url.to_string(), resp_ns = start.elapsed().as_nanos(), "tick success");
+    async fn handle_response_ok(
+        &self,
+        target: String,
+        url: Url,
+        start: Instant,
+        status: &mut Status,
+    ) {
+        debug!(
+            runner_target = target,
+            url = url.to_string(),
+            resp_ns = start.elapsed().as_nanos(),
+            "tick success"
+        );
         self.update_request_metrics(true, &start, target.clone(), url.clone());
 
         match status.handle_available() {
             Event::UnavailableToAvailable(diff) => {
                 counter!(KEY_EVENTS,
-                            LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_UNAVAILABLE_TO_AVAILABLE,
-                            LABEL_EVENTS_TARGET_NAME => target.clone(),
-                        ).increment(1);
-                info!(runner_target = target, url = url.to_string(), diff = diff.num_seconds(), "unavailable to available");
+                    LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_UNAVAILABLE_TO_AVAILABLE,
+                    LABEL_EVENTS_TARGET_NAME => target.clone(),
+                )
+                .increment(1);
+                info!(
+                    runner_target = target,
+                    url = url.to_string(),
+                    diff = diff.num_seconds(),
+                    "unavailable to available"
+                );
             }
             _ => {}
         }
@@ -213,7 +270,13 @@ impl Runner {
     /// * `started`: When the request started.
     /// * `target`: The target name.
     /// * `url`:  The target url.
-    fn update_request_metrics(&self, success: bool, started: &Instant, target: String, url: Url) {
+    fn update_request_metrics(
+        &self,
+        success: bool,
+        started: &Instant,
+        target: String,
+        url: Url,
+    ) {
         let status = if success {
             VALUE_EVENT_STATUS_SUCCESS
         } else {
@@ -225,28 +288,32 @@ impl Runner {
             LABEL_EVENTS_STATUS => status,
             LABEL_EVENTS_TARGET_NAME => target.to_string(),
             LABEL_EVENTS_TARGET_URL => url.to_string(),
-        ).increment(1);
+        )
+        .increment(1);
 
         histogram!(
             KEY_REQUESTS_RESPONSE_TIME_NS,
             LABEL_EVENTS_STATUS => status,
             LABEL_EVENTS_TARGET_NAME => target.to_string(),
             LABEL_EVENTS_TARGET_URL => url.to_string(),
-        ).record(started.elapsed().as_nanos() as f64);
+        )
+        .record(started.elapsed().as_nanos() as f64);
 
         gauge!(
             KEY_TARGET_STATUS,
             LABEL_EVENTS_TARGET_NAME => target.to_string(),
             LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_AVAILABLE,
             LABEL_TARGET_URLS => vec_to_string(self.target.urls.clone()),
-        ).set(if success { 1. } else { 0. });
+        )
+        .set(if success { 1. } else { 0. });
 
         gauge!(
             KEY_TARGET_STATUS,
             LABEL_EVENTS_TARGET_NAME => target.to_string(),
             LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_UNAVAILABLE,
             LABEL_TARGET_URLS => vec_to_string(self.target.urls.clone()),
-        ).set(if success { 0. } else { 1. });
+        )
+        .set(if success { 0. } else { 1. });
     }
 }
 
@@ -292,48 +359,72 @@ impl RunnerBuilder {
     }
 
     /// Set the target of the RunnerBuilder.
-    pub fn target(mut self, target: Target) -> RunnerBuilder {
+    pub fn target(
+        mut self,
+        target: Target,
+    ) -> RunnerBuilder {
         self.target = target;
         self
     }
 
     /// Set the connect_timeout_ms of the RunnerBuilder.
-    pub fn connect_timeout_ms(mut self, connect_timeout_ms: u64) -> RunnerBuilder {
+    pub fn connect_timeout_ms(
+        mut self,
+        connect_timeout_ms: u64,
+    ) -> RunnerBuilder {
         self.connect_timeout_ms = connect_timeout_ms;
         self
     }
 
     /// Set the timeout_ms of the RunnerBuilder.
-    pub fn timeout_ms(mut self, timeout_ms: u64) -> RunnerBuilder {
+    pub fn timeout_ms(
+        mut self,
+        timeout_ms: u64,
+    ) -> RunnerBuilder {
         self.timeout_ms = timeout_ms;
         self
     }
 
     /// Set the wait_time_seconds of the RunnerBuilder.
-    pub fn wait_time_seconds(mut self, wait_time_seconds: u64) -> RunnerBuilder {
+    pub fn wait_time_seconds(
+        mut self,
+        wait_time_seconds: u64,
+    ) -> RunnerBuilder {
         self.wait_time_seconds = wait_time_seconds;
         self
     }
 
     /// Set the failure_threshold of the RunnerBuilder.
-    pub fn failure_threshold(mut self, failure_threshold: u8) -> RunnerBuilder {
+    pub fn failure_threshold(
+        mut self,
+        failure_threshold: u8,
+    ) -> RunnerBuilder {
         self.failure_threshold = failure_threshold;
         self
     }
 
     /// Set the run_for_seconds of the RunnerBuilder.
-    pub fn run_for_seconds(mut self, run_for_seconds: u64) -> RunnerBuilder {
+    pub fn run_for_seconds(
+        mut self,
+        run_for_seconds: u64,
+    ) -> RunnerBuilder {
         self.run_for_seconds = Some(run_for_seconds);
         self
     }
 
     /// Set the run_for_iterations of the RunnerBuilder.
-    pub fn run_for_iterations(mut self, run_for_iterations: u64) -> RunnerBuilder {
+    pub fn run_for_iterations(
+        mut self,
+        run_for_iterations: u64,
+    ) -> RunnerBuilder {
         self.run_for_iterations = Some(run_for_iterations);
         self
     }
 
-    pub fn user_agent(mut self, user_agent: String) -> RunnerBuilder {
+    pub fn user_agent(
+        mut self,
+        user_agent: String,
+    ) -> RunnerBuilder {
         self.user_agent = Some(user_agent);
         self
     }
@@ -405,7 +496,10 @@ mod tests {
     #[test]
     fn test_runner_builder() {
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse("https://example.com").unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse("https://example.com").unwrap()],
+            ))
             .connect_timeout_ms(1000)
             .timeout_ms(1000)
             .failure_threshold(1)
@@ -416,7 +510,10 @@ mod tests {
             .build();
 
         assert_eq!(runner.target.name, "external");
-        assert_eq!(runner.target.urls[0], Url::parse("https://example.com").unwrap());
+        assert_eq!(
+            runner.target.urls[0],
+            Url::parse("https://example.com").unwrap()
+        );
         assert_eq!(runner.connect_timeout_ms, 1000);
         assert_eq!(runner.timeout_ms, 1000);
         assert_eq!(runner.failure_threshold, 1);
@@ -436,78 +533,73 @@ mod tests {
         assert_eq!(runner.failure_threshold, 5);
         assert_eq!(runner.run_for_seconds, None);
         assert_eq!(runner.run_for_iterations, None);
-        assert_eq!(runner.user_agent, format!("{}/{}", built_info::PKG_NAME, built_info::PKG_VERSION));
+        assert_eq!(
+            runner.user_agent,
+            format!("{}/{}", built_info::PKG_NAME, built_info::PKG_VERSION)
+        );
     }
 
     #[test]
     fn test_runner_builder_target() {
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse("https://example.com").unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse("https://example.com").unwrap()],
+            ))
             .build();
 
         assert_eq!(runner.target.name, "external");
-        assert_eq!(runner.target.urls[0], Url::parse("https://example.com").unwrap());
+        assert_eq!(
+            runner.target.urls[0],
+            Url::parse("https://example.com").unwrap()
+        );
     }
 
     #[test]
     fn test_runner_builder_connect_timeout_ms() {
-        let runner = RunnerBuilder::new()
-            .connect_timeout_ms(1000)
-            .build();
+        let runner = RunnerBuilder::new().connect_timeout_ms(1000).build();
 
         assert_eq!(runner.connect_timeout_ms, 1000);
     }
 
     #[test]
     fn test_runner_builder_timeout_ms() {
-        let runner = RunnerBuilder::new()
-            .timeout_ms(1000)
-            .build();
+        let runner = RunnerBuilder::new().timeout_ms(1000).build();
 
         assert_eq!(runner.timeout_ms, 1000);
     }
 
     #[test]
     fn test_runner_builder_wait_time_seconds() {
-        let runner = RunnerBuilder::new()
-            .wait_time_seconds(1)
-            .build();
+        let runner = RunnerBuilder::new().wait_time_seconds(1).build();
 
         assert_eq!(runner.wait_time_seconds, 1);
     }
 
     #[test]
     fn test_runner_builder_failure_threshold() {
-        let runner = RunnerBuilder::new()
-            .failure_threshold(1)
-            .build();
+        let runner = RunnerBuilder::new().failure_threshold(1).build();
 
         assert_eq!(runner.failure_threshold, 1);
     }
 
     #[test]
     fn test_runner_builder_run_for_seconds() {
-        let runner = RunnerBuilder::new()
-            .run_for_seconds(1)
-            .build();
+        let runner = RunnerBuilder::new().run_for_seconds(1).build();
 
         assert_eq!(runner.run_for_seconds, Some(1));
     }
 
     #[test]
     fn test_runner_builder_run_for_iterations() {
-        let runner = RunnerBuilder::new()
-            .run_for_iterations(1)
-            .build();
+        let runner = RunnerBuilder::new().run_for_iterations(1).build();
 
         assert_eq!(runner.run_for_iterations, Some(1));
     }
 
     #[test]
     fn test_runner_builder_user_agent() {
-        let runner = RunnerBuilder::new()
-            .user_agent("test".to_string())
-            .build();
+        let runner = RunnerBuilder::new().user_agent("test".to_string()).build();
 
         assert_eq!(runner.user_agent, "test");
     }
@@ -515,7 +607,10 @@ mod tests {
     #[test]
     fn test_runner_get_user_agent() {
         let user_agent = super::get_user_agent();
-        assert_eq!(user_agent, format!("{}/{}", built_info::PKG_NAME, built_info::PKG_VERSION));
+        assert_eq!(
+            user_agent,
+            format!("{}/{}", built_info::PKG_NAME, built_info::PKG_VERSION)
+        );
     }
 
     #[tokio::test]
@@ -524,13 +619,15 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .run_for_iterations(1)
             .build();
 
         let mock = server.mock(|when, then| {
-            when.method(GET)
-                .path("/");
+            when.method(GET).path("/");
             then.status(200);
         });
 
@@ -545,17 +642,18 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .run_for_iterations(1)
             .timeout_ms(10)
             .connect_timeout_ms(10)
             .build();
 
         let mock = server.mock(|when, then| {
-            when.method(GET)
-                .path("/");
-            then.status(200)
-                .delay(std::time::Duration::from_secs(1));
+            when.method(GET).path("/");
+            then.status(200).delay(std::time::Duration::from_secs(1));
         });
 
         runner.run().await.unwrap();
@@ -569,17 +667,26 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .build();
 
         let mock = server.mock(|when, then| {
-            when.method(GET)
-                .path("/");
+            when.method(GET).path("/");
             then.status(200);
         });
 
         let status = &mut Status::new(5);
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
 
         assert_eq!(status.is_unavailable, false);
         assert_eq!(status.unavailable_counted, 0);
@@ -594,11 +701,21 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .build();
 
         let status = &mut Status::new(5);
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
 
         assert_eq!(status.is_unavailable, false);
         assert_eq!(status.unavailable_counted, 1);
@@ -611,17 +728,26 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .build();
 
         let mock = server.mock(|when, then| {
-            when.method(GET)
-                .path("/");
+            when.method(GET).path("/");
             then.status(500);
         });
 
         let status = &mut Status::new(5);
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
 
         assert_eq!(status.is_unavailable, false);
         assert_eq!(status.unavailable_counted, 1);
@@ -636,17 +762,26 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .build();
 
         let mock = server.mock(|when, then| {
-            when.method(GET)
-                .path("/");
+            when.method(GET).path("/");
             then.status(400);
         });
 
         let status = &mut Status::new(5);
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
 
         assert_eq!(status.is_unavailable, false);
         assert_eq!(status.unavailable_counted, 1);
@@ -661,19 +796,42 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .build();
 
         let mock = server.mock(|when, then| {
-            when.method(GET)
-                .path("/");
+            when.method(GET).path("/");
             then.status(500);
         });
 
         let status = &mut Status::new(2);
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
 
         assert_eq!(status.is_unavailable, true);
         assert_eq!(status.unavailable_counted, 3);
@@ -688,21 +846,44 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .build();
 
         let mock = server.mock(|when, then| {
-            when.method(GET)
-                .path("/");
+            when.method(GET).path("/");
             then.status(200);
         });
 
         let status = &mut Status::new(2);
         status.is_unavailable = true;
         status.unavailable_started = chrono::Utc::now();
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
-        runner.check_url(Url::parse(&url).unwrap(), reqwest::Client::new(), status, "test".to_string()).await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                reqwest::Client::new(),
+                status,
+                "test".to_string(),
+            )
+            .await;
 
         assert_eq!(status.is_unavailable, false);
         assert_eq!(status.available_counted, 3);
@@ -717,22 +898,30 @@ mod tests {
         let url = server.url("/");
 
         let runner = RunnerBuilder::new()
-            .target(Target::new("external".to_string(), vec![Url::parse(&url).unwrap()]))
+            .target(Target::new(
+                "external".to_string(),
+                vec![Url::parse(&url).unwrap()],
+            ))
             .connect_timeout_ms(10)
             .timeout_ms(10)
             .build();
 
         let mock = server.mock(|when, then| {
-            when.method(GET)
-                .path("/");
-            then.status(200)
-                .delay(std::time::Duration::from_secs(1));
+            when.method(GET).path("/");
+            then.status(200).delay(std::time::Duration::from_secs(1));
         });
 
         let client = runner.get_client().expect("failed to get client");
 
         let status = &mut Status::new(2);
-        runner.check_url(Url::parse(&url).unwrap(), client.clone(), status, "test".to_string()).await;
+        runner
+            .check_url(
+                Url::parse(&url).unwrap(),
+                client.clone(),
+                status,
+                "test".to_string(),
+            )
+            .await;
 
         assert_eq!(status.unavailable_counted, 1);
 

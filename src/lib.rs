@@ -5,6 +5,6 @@ pub mod built_info {
     include!(concat!(env!("OUT_DIR"), "/built.rs"));
 }
 
-pub mod runner;
 pub mod log;
 pub mod metric;
+pub mod runner;

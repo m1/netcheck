@@ -32,7 +32,10 @@ mod tests {
     #[test]
     fn test_vec_to_strings() {
         let vec = vec![1, 2, 3];
-        assert_eq!(vec_to_strings(vec), vec!["1".to_string(), "2".to_string(), "3".to_string()]);
+        assert_eq!(
+            vec_to_strings(vec),
+            vec!["1".to_string(), "2".to_string(), "3".to_string()]
+        );
     }
 
     #[test]

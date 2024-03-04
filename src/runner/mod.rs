@@ -6,6 +6,6 @@ pub use self::status::Status;
 pub use self::target::Target;
 
 mod runner;
-mod target;
 mod status;
+mod target;
 mod url;

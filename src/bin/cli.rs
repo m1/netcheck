@@ -2,8 +2,8 @@ use clap::{Args, Parser, Subcommand};
 use thiserror::Error;
 use tracing_subscriber::filter::LevelFilter;
 
-use netcheck::{log, metric};
 use netcheck::runner;
+use netcheck::{log, metric};
 
 #[derive(Parser)]
 #[command(name = "netcheck")]
@@ -37,19 +37,41 @@ enum Commands {
 #[command(about = "Runs the netcheck service")]
 #[command(long_about = "Runs the netcheck service and checks the network using the passed targets")]
 struct Run {
-    #[arg(short, long, help = "List of targets to check if a network connection is attainable", default_value = "external=https://one.one.one.one,https://dns.google")]
+    #[arg(
+        short,
+        long,
+        help = "List of targets to check if a network connection is attainable",
+        default_value = "external=https://one.one.one.one,https://dns.google"
+    )]
     target: Vec<runner::Target>,
 
-    #[arg(long = "connect", help = "Connect timeout milliseconds to be considered a failure", default_value = "500")]
+    #[arg(
+        long = "connect",
+        help = "Connect timeout milliseconds to be considered a failure",
+        default_value = "500"
+    )]
     connect_timeout_ms: u64,
 
-    #[arg(long = "timeout", help = "Timeout milliseconds to be considered a failure", default_value = "500")]
+    #[arg(
+        long = "timeout",
+        help = "Timeout milliseconds to be considered a failure",
+        default_value = "500"
+    )]
     timeout_ms: u64,
 
-    #[arg(short = 'w', long = "wait", help = "Time to wait between requests in seconds", default_value = "2")]
+    #[arg(
+        short = 'w',
+        long = "wait",
+        help = "Time to wait between requests in seconds",
+        default_value = "2"
+    )]
     wait_time_seconds: u64,
 
-    #[arg(long, help = "Failures in a row to determine if target is failing", default_value = "5")]
+    #[arg(
+        long,
+        help = "Failures in a row to determine if target is failing",
+        default_value = "5"
+    )]
     failure_threshold: u8,
 }
 
@@ -126,18 +148,22 @@ mod tests {
     #[test]
     fn test_cli() {
         let cli = Cli::parse_from(&["netcheck", "run"]);
-        assert_eq!(cli.command, Commands::Run(Run {
-            target: vec![
-                runner::Target::new("external".to_string(), vec![
-                    "https://one.one.one.one".parse().unwrap(),
-                    "https://dns.google".parse().unwrap(),
-                ]),
-            ],
-            connect_timeout_ms: 500,
-            timeout_ms: 500,
-            wait_time_seconds: 2,
-            failure_threshold: 5,
-        }));
+        assert_eq!(
+            cli.command,
+            Commands::Run(Run {
+                target: vec![runner::Target::new(
+                    "external".to_string(),
+                    vec![
+                        "https://one.one.one.one".parse().unwrap(),
+                        "https://dns.google".parse().unwrap(),
+                    ]
+                ),],
+                connect_timeout_ms: 500,
+                timeout_ms: 500,
+                wait_time_seconds: 2,
+                failure_threshold: 5,
+            })
+        );
     }
 
     #[test]
@@ -147,25 +173,38 @@ mod tests {
             "run",
             "--target",
             "internal=https://google.com,https://example.com",
-            "--target", "external=https://example.com",
-            "--connect", "1",
-            "--timeout", "1",
-            "--wait", "1",
-            "--failure-threshold", "1"]);
-        assert_eq!(cli.command, Commands::Run(Run {
-            target: vec![
-                runner::Target::new("internal".to_string(), vec![
-                    "https://google.com".parse().unwrap(),
-                    "https://example.com".parse().unwrap(),
-                ]),
-                runner::Target::new("external".to_string(), vec![
-                    "https://example.com".parse().unwrap(),
-                ]),
-            ],
-            connect_timeout_ms: 1,
-            timeout_ms: 1,
-            wait_time_seconds: 1,
-            failure_threshold: 1,
-        }));
+            "--target",
+            "external=https://example.com",
+            "--connect",
+            "1",
+            "--timeout",
+            "1",
+            "--wait",
+            "1",
+            "--failure-threshold",
+            "1",
+        ]);
+        assert_eq!(
+            cli.command,
+            Commands::Run(Run {
+                target: vec![
+                    runner::Target::new(
+                        "internal".to_string(),
+                        vec![
+                            "https://google.com".parse().unwrap(),
+                            "https://example.com".parse().unwrap(),
+                        ]
+                    ),
+                    runner::Target::new(
+                        "external".to_string(),
+                        vec!["https://example.com".parse().unwrap(),]
+                    ),
+                ],
+                connect_timeout_ms: 1,
+                timeout_ms: 1,
+                wait_time_seconds: 1,
+                failure_threshold: 1,
+            })
+        );
     }
 }

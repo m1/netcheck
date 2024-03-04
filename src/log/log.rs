@@ -1,9 +1,9 @@
-use tracing_subscriber::{EnvFilter, Layer};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::fmt::time::UtcTime;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::{EnvFilter, Layer};
 
 pub struct Builder {
     level: LevelFilter,
@@ -20,49 +20,74 @@ impl Builder {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn with_level(&mut self, level: LevelFilter) -> &mut Self {
+    pub fn with_level(
+        &mut self,
+        level: LevelFilter,
+    ) -> &mut Self {
         self.level = level;
         self
     }
 
-    pub fn with_span_events(&mut self, span_events: bool) -> &mut Self {
+    pub fn with_span_events(
+        &mut self,
+        span_events: bool,
+    ) -> &mut Self {
         self.span_events = span_events;
         self
     }
 
-    pub fn with_file(&mut self, file: bool) -> &mut Self {
+    pub fn with_file(
+        &mut self,
+        file: bool,
+    ) -> &mut Self {
         self.file = file;
         self
     }
 
-    pub fn with_flatten_event(&mut self, flatten_event: bool) -> &mut Self {
+    pub fn with_flatten_event(
+        &mut self,
+        flatten_event: bool,
+    ) -> &mut Self {
         self.flatten_event = flatten_event;
         self
     }
 
-    pub fn with_target(&mut self, target: bool) -> &mut Self {
+    pub fn with_target(
+        &mut self,
+        target: bool,
+    ) -> &mut Self {
         self.target = target;
         self
     }
 
-    pub fn with_span_list(&mut self, span_list: bool) -> &mut Self {
+    pub fn with_span_list(
+        &mut self,
+        span_list: bool,
+    ) -> &mut Self {
         self.span_list = span_list;
         self
     }
 
-    pub fn with_thread_names(&mut self, thread_names: bool) -> &mut Self {
+    pub fn with_thread_names(
+        &mut self,
+        thread_names: bool,
+    ) -> &mut Self {
         self.thread_names = thread_names;
         self
     }
 
-    pub fn with_thread_ids(&mut self, thread_ids: bool) -> &mut Self {
+    pub fn with_thread_ids(
+        &mut self,
+        thread_ids: bool,
+    ) -> &mut Self {
         self.thread_ids = thread_ids;
         self
     }
 
     pub fn build(&mut self) {
         let env = EnvFilter::builder()
-            .with_default_directive(self.level.into()).parse("")
+            .with_default_directive(self.level.into())
+            .parse("")
             .expect("Failed to parse filter");
 
         let layer = tracing_subscriber::fmt::layer()
@@ -78,7 +103,11 @@ impl Builder {
             .with_file(self.file)
             .with_line_number(true)
             .with_ansi(false)
-            .with_span_events(if self.span_events { FmtSpan::ENTER | FmtSpan::EXIT | FmtSpan::CLOSE } else { FmtSpan::NONE })
+            .with_span_events(if self.span_events {
+                FmtSpan::ENTER | FmtSpan::EXIT | FmtSpan::CLOSE
+            } else {
+                FmtSpan::NONE
+            })
             .with_thread_names(self.thread_names)
             .log_internal_errors(true)
             .with_filter(env);
@@ -119,7 +148,8 @@ mod tests {
     #[test]
     fn test_builder() {
         let mut binding = Builder::new();
-        let builder = binding.with_level(LevelFilter::INFO)
+        let builder = binding
+            .with_level(LevelFilter::INFO)
             .with_span_events(false)
             .with_file(false)
             .with_flatten_event(false)
