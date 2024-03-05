@@ -20,7 +20,7 @@ LABEL org.opencontainers.image.title="netcheck" \
       org.opencontainers.image.authors="hello@milescroxford.com" \
       org.opencontainers.image.version="0.0.1"
 
-COPY --from=builder /app/target/release/netcheck /.
+COPY --from=builder /app/target/release/netcheck /netcheck
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 CMD ["./netcheck"]
