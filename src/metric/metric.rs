@@ -4,10 +4,10 @@ use metrics_exporter_prometheus::PrometheusBuilder;
 use crate::built_info;
 
 pub const KEY_NETCHECK_RUNNING_STATUS: &str = "netcheck_running_status";
-pub const KEY_EVENTS: &str = "events";
-pub const KEY_REQUESTS: &str = "requests";
-pub const KEY_REQUESTS_RESPONSE_TIME_NS: &str = "requests_response_time_ns";
-pub const KEY_TARGET_STATUS: &str = "target_status";
+pub const KEY_EVENTS: &str = "netcheck_events";
+pub const KEY_REQUESTS: &str = "netcheck_requests";
+pub const KEY_REQUESTS_RESPONSE_TIME_NS: &str = "netcheck_requests_response_time_ns";
+pub const KEY_TARGET_STATUS: &str = "netcheck_target_status";
 
 pub const LABEL_EVENTS_STATUS: &str = "status";
 pub const LABEL_EVENTS_TARGET_NAME: &str = "target_name";
