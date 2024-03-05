@@ -21,6 +21,6 @@ LABEL org.opencontainers.image.title="netcheck" \
       org.opencontainers.image.version="0.0.1"
 
 COPY --from=builder /app/target/release/netcheck /netcheck
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 CMD ["./netcheck"]
