@@ -1,4 +1,5 @@
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+
 use actix_web::{App, HttpServer, web};
 use actix_web_opentelemetry::{PrometheusMetricsHandler, RequestMetrics};
 use opentelemetry::{global, KeyValue};
@@ -20,6 +21,8 @@ use tokio::task;
 use tracing::info;
 
 use crate::built_info;
+
+const DEFAULT_PORT: u16 = 8080;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -81,7 +84,7 @@ impl MetricProvider {
 
     #[tracing::instrument(level = "debug")]
     pub async fn listen(&self, port: Option<u16>) -> Result<(), Error> {
-        let port = port.unwrap_or(8080);
+        let port = port.unwrap_or(DEFAULT_PORT);
         let meter_provider = self.meter_provider.clone();
         let metrics_handler = self.metrics_handler.clone();
         let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
