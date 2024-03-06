@@ -5,6 +5,7 @@ pub use self::status::Event;
 pub use self::status::Status;
 pub use self::target::Target;
 
+mod metric;
 mod runner;
 mod status;
 mod target;

@@ -8,7 +8,7 @@ license = "MIT"
 repository = "https://github.com/m1/netcheck"
 readme = "README.md"
 build = "build.rs"
-keywords= ["network", "networking", "monitoring", "observability", "availability"]
+keywords = ["network", "networking", "monitoring", "observability", "availability"]
 categories = ["development-tools", "development-tools::debugging", "network-programming", "command-line-utilities"]
 
 [badges]
@@ -29,7 +29,16 @@ thiserror = { version = "1.0.57", features = [] }
 tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros", "time"] }
 tracing = { version = "0.1.40", features = ["log", "std", ] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt", "std", "serde", "json", "serde_json", "time", "thread_local", ] }
-pretty_assertions = "1.4.0"
+pretty_assertions = { version = "1.4.0", features = [] }
+prometheus = { version = "0.13.3", features = [] }
+opentelemetry-prometheus = { version = "0.15.0", features = [] }
+opentelemetry = { version = "0.22", features = ["otel_unstable"] }
+opentelemetry_sdk = { version = "0.22", features = ["rt-tokio-current-thread", "metrics"] }
+opentelemetry-stdout = { version = "0.3", features = ["trace"] }
+actix-web-opentelemetry = { version = "0.16.0", features = ["metrics-prometheus"] }
+actix-http = { version = "3.0", default-features = false, features = ["compress-zstd"] }
+actix-web = { version = "4.0", default-features = false, features = ["compress-zstd"] }
+opentelemetry-semantic-conventions = "0.14.0"
 
 [build-dependencies]
 built = { version = "0.7.1", features = [] }

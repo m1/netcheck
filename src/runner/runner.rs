@@ -1,22 +1,16 @@
 use std::time::{Duration, Instant};
 
-use metrics::{counter, gauge, histogram};
+use opentelemetry::KeyValue;
 use reqwest::{Client, Url};
 use thiserror::Error;
 use tokio::{task, time};
 use tracing::{debug, info};
 
 use crate::built_info;
-use crate::metric::{
-    KEY_EVENTS, KEY_REQUESTS, KEY_REQUESTS_RESPONSE_TIME_NS, KEY_TARGET_STATUS,
-    LABEL_EVENTS_STATUS, LABEL_EVENTS_TARGET_NAME, LABEL_EVENTS_TARGET_URL, LABEL_TARGET_URLS,
-    VALUE_EVENT_STATUS_AVAILABLE, VALUE_EVENT_STATUS_AVAILABLE_TO_UNAVAILABLE,
-    VALUE_EVENT_STATUS_FAILURE, VALUE_EVENT_STATUS_SUCCESS, VALUE_EVENT_STATUS_UNAVAILABLE,
-    VALUE_EVENT_STATUS_UNAVAILABLE_TO_AVAILABLE,
-};
+use crate::runner::{Event, Status};
+use crate::runner::metric::{METRIC_LABEL_RUNNER_STARTED_AT, METRIC_LABEL_RUNNER_VERSION, METRIC_LABEL_STATUS, METRIC_LABEL_TARGET_NAME, METRIC_LABEL_URL, METRIC_LABEL_URLS, METRIC_VALUE_AVAILABLE, METRIC_VALUE_AVAILABLE_TO_UNAVAILABLE, METRIC_VALUE_UNAVAILABLE, METRIC_VALUE_UNAVAILABLE_TO_AVAILABLE, Metrics};
 use crate::runner::target::Target;
 use crate::runner::url::vec_to_string;
-use crate::runner::{Event, Status};
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -45,6 +39,8 @@ pub struct Runner {
     run_for_seconds: Option<u64>,
     run_for_iterations: Option<u64>,
     user_agent: String,
+
+    pub metrics: Metrics,
 }
 
 impl Runner {
@@ -60,6 +56,11 @@ impl Runner {
         let forever = task::spawn(async move {
             runner.tick(urls, client, wait, &mut status).await;
         });
+
+        self.metrics.status.observe(1, &[
+            KeyValue::new(METRIC_LABEL_RUNNER_VERSION, built_info::PKG_VERSION),
+            KeyValue::new(METRIC_LABEL_RUNNER_STARTED_AT, chrono::Utc::now().to_rfc3339()),
+        ]);
 
         forever.await?;
 
@@ -203,11 +204,10 @@ impl Runner {
 
         match status.handle_unavailable() {
             Event::AvailableToUnavailable => {
-                counter!(KEY_EVENTS,
-                            LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_AVAILABLE_TO_UNAVAILABLE,
-                    LABEL_EVENTS_TARGET_NAME => target.clone(),
-                )
-                .increment(1);
+                self.metrics.events.add(1, &[
+                    KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_AVAILABLE_TO_UNAVAILABLE),
+                    KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+                ]);
                 info!(
                     runner_target = target,
                     url = url.to_string(),
@@ -246,11 +246,10 @@ impl Runner {
 
         match status.handle_available() {
             Event::UnavailableToAvailable(diff) => {
-                counter!(KEY_EVENTS,
-                    LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_UNAVAILABLE_TO_AVAILABLE,
-                    LABEL_EVENTS_TARGET_NAME => target.clone(),
-                )
-                .increment(1);
+                self.metrics.events.add(1, &[
+                    KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_UNAVAILABLE_TO_AVAILABLE),
+                    KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+                ]);
                 info!(
                     runner_target = target,
                     url = url.to_string(),
@@ -278,42 +277,34 @@ impl Runner {
         url: Url,
     ) {
         let status = if success {
-            VALUE_EVENT_STATUS_SUCCESS
+            METRIC_VALUE_AVAILABLE
         } else {
-            VALUE_EVENT_STATUS_FAILURE
+            METRIC_VALUE_UNAVAILABLE
         };
 
-        counter!(
-            KEY_REQUESTS,
-            LABEL_EVENTS_STATUS => status,
-            LABEL_EVENTS_TARGET_NAME => target.to_string(),
-            LABEL_EVENTS_TARGET_URL => url.to_string(),
-        )
-        .increment(1);
+        self.metrics.requests.add(1, &[
+            KeyValue::new(METRIC_LABEL_STATUS, status),
+            KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+            KeyValue::new(METRIC_LABEL_URL, url.to_string()),
+        ]);
 
-        histogram!(
-            KEY_REQUESTS_RESPONSE_TIME_NS,
-            LABEL_EVENTS_STATUS => status,
-            LABEL_EVENTS_TARGET_NAME => target.to_string(),
-            LABEL_EVENTS_TARGET_URL => url.to_string(),
-        )
-        .record(started.elapsed().as_nanos() as f64);
+        self.metrics.requests_response_time_ns.record(started.elapsed().as_nanos() as f64, &[
+            KeyValue::new(METRIC_LABEL_STATUS, status),
+            KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+            KeyValue::new(METRIC_LABEL_URL, url.to_string()),
+        ]);
 
-        gauge!(
-            KEY_TARGET_STATUS,
-            LABEL_EVENTS_TARGET_NAME => target.to_string(),
-            LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_AVAILABLE,
-            LABEL_TARGET_URLS => vec_to_string(self.target.urls.clone()),
-        )
-        .set(if success { 1. } else { 0. });
+        self.metrics.target_status.observe(if success { 1 } else { 0 }, &[
+            KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+            KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_AVAILABLE),
+            KeyValue::new(METRIC_LABEL_URLS, vec_to_string(self.target.urls.clone())),
+        ]);
 
-        gauge!(
-            KEY_TARGET_STATUS,
-            LABEL_EVENTS_TARGET_NAME => target.to_string(),
-            LABEL_EVENTS_STATUS => VALUE_EVENT_STATUS_UNAVAILABLE,
-            LABEL_TARGET_URLS => vec_to_string(self.target.urls.clone()),
-        )
-        .set(if success { 0. } else { 1. });
+        self.metrics.target_status.observe(if success { 0 } else { 1 }, &[
+            KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+            KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_UNAVAILABLE),
+            KeyValue::new(METRIC_LABEL_URLS, vec_to_string(self.target.urls.clone())),
+        ]);
     }
 }
 
@@ -455,6 +446,7 @@ impl RunnerBuilder {
             run_for_seconds: self.run_for_seconds,
             run_for_iterations: self.run_for_iterations,
             user_agent: self.user_agent.unwrap_or_else(get_user_agent),
+            metrics: Metrics::default(),
         }
     }
 }
