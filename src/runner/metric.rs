@@ -38,6 +38,8 @@ impl Default for Metrics {
 
 #[cfg(test)]
 mod tests {
+    use opentelemetry::KeyValue;
+    use crate::built_info;
     use super::*;
 
     #[test]
