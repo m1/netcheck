@@ -4,8 +4,8 @@ use clap::{Args, Parser, Subcommand};
 use thiserror::Error;
 use tracing_subscriber::filter::LevelFilter;
 
-use netcheck::{log, metric};
 use netcheck::runner;
+use netcheck::{log, metric};
 
 #[derive(Parser, Debug)]
 #[command(name = "netcheck")]
@@ -61,7 +61,6 @@ struct Run {
     #[arg(long = "timeout")]
     #[arg(help = "Timeout milliseconds to be considered a failure")]
     #[arg(default_value = "500")]
-
     timeout_ms: u64,
 
     #[arg(short = 'w')]
@@ -70,7 +69,7 @@ struct Run {
     #[arg(default_value = "2")]
     wait_time_seconds: u64,
 
-    #[arg(long,)]
+    #[arg(long)]
     #[arg(help = "Failures in a row to determine if target is failing")]
     #[arg(default_value = "5")]
     failure_threshold: u8,
@@ -97,18 +96,29 @@ async fn main() -> Result<(), Error> {
 }
 
 #[tracing::instrument(level = "info")]
-async fn run(args: Run, metrics_port: Option<u16>) -> Result<(), Error> {
+async fn run(
+    args: Run,
+    metrics_port: Option<u16>,
+) -> Result<(), Error> {
     let metrics = metric::MetricProvider::new();
-    let background_threads: Arc<Mutex<Vec<tokio::task::JoinHandle<()>>>> = Arc::new(Mutex::new(Vec::new()));
+    let background_threads: Arc<Mutex<Vec<tokio::task::JoinHandle<()>>>> =
+        Arc::new(Mutex::new(Vec::new()));
 
-    let mut background_threads_locked = background_threads.lock().expect("Failed to remember our background threads");
+    let mut background_threads_locked = background_threads
+        .lock()
+        .expect("Failed to remember our background threads");
 
     // let mut handles = vec![];
     let targets = args.target;
 
     for target in targets {
         background_threads_locked.push(tokio::spawn(async move {
-            let runner = runner::RunnerBuilder::new().target(target).connect_timeout_ms(args.connect_timeout_ms).timeout_ms(args.timeout_ms).wait_time_seconds(args.wait_time_seconds).build();
+            let runner = runner::RunnerBuilder::new()
+                .target(target)
+                .connect_timeout_ms(args.connect_timeout_ms)
+                .timeout_ms(args.timeout_ms)
+                .wait_time_seconds(args.wait_time_seconds)
+                .build();
             match runner.run().await {
                 Err(e) => {
                     tracing::error!("handler error: {}", e);
@@ -162,7 +172,7 @@ mod tests {
                         "https://one.one.one.one".parse().unwrap(),
                         "https://dns.google".parse().unwrap(),
                     ],
-                ), ],
+                ),],
                 connect_timeout_ms: 500,
                 timeout_ms: 500,
                 wait_time_seconds: 2,

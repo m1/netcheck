@@ -1,21 +1,16 @@
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
-use actix_web::{App, HttpServer, web};
+use actix_web::{web, App, HttpServer};
 use actix_web_opentelemetry::{PrometheusMetricsHandler, RequestMetrics};
-use opentelemetry::{global, KeyValue};
 use opentelemetry::metrics::MetricsError;
-use opentelemetry_sdk::{
-    metrics::MeterProviderBuilder
-
-    ,
-    Resource,
-};
+use opentelemetry::{global, KeyValue};
 use opentelemetry_sdk::metrics::SdkMeterProvider;
+use opentelemetry_sdk::{metrics::MeterProviderBuilder, Resource};
+use opentelemetry_semantic_conventions::resource::TELEMETRY_SDK_LANGUAGE;
 use opentelemetry_semantic_conventions::{
     resource::{SERVICE_NAME, SERVICE_VERSION},
     SCHEMA_URL,
 };
-use opentelemetry_semantic_conventions::resource::TELEMETRY_SDK_LANGUAGE;
 use thiserror::Error;
 use tokio::task;
 use tracing::info;
@@ -83,21 +78,23 @@ impl MetricProvider {
     }
 
     #[tracing::instrument(level = "debug")]
-    pub async fn listen(&self, port: Option<u16>) -> Result<(), Error> {
+    pub async fn listen(
+        &self,
+        port: Option<u16>,
+    ) -> Result<(), Error> {
         let port = port.unwrap_or(DEFAULT_PORT);
         let meter_provider = self.meter_provider.clone();
         let metrics_handler = self.metrics_handler.clone();
         let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
 
         HttpServer::new(move || {
-            let app = App::new()
-                .wrap(RequestMetrics::default());
+            let app = App::new().wrap(RequestMetrics::default());
             let app = app.route("/metrics", web::get().to(metrics_handler.clone()));
             app
         })
-            .bind(addr)?
-            .run()
-            .await?;
+        .bind(addr)?
+        .run()
+        .await?;
 
         info!("metrics server listening on port {}", port);
         meter_provider.shutdown()?;

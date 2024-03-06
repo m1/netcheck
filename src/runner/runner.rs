@@ -7,10 +7,15 @@ use tokio::{task, time};
 use tracing::{debug, info};
 
 use crate::built_info;
-use crate::runner::{Event, Status};
-use crate::runner::metric::{METRIC_LABEL_RUNNER_STARTED_AT, METRIC_LABEL_RUNNER_VERSION, METRIC_LABEL_STATUS, METRIC_LABEL_TARGET_NAME, METRIC_LABEL_URL, METRIC_LABEL_URLS, METRIC_VALUE_AVAILABLE, METRIC_VALUE_AVAILABLE_TO_UNAVAILABLE, METRIC_VALUE_UNAVAILABLE, METRIC_VALUE_UNAVAILABLE_TO_AVAILABLE, Metrics};
+use crate::runner::metric::{
+    Metrics, METRIC_LABEL_RUNNER_STARTED_AT, METRIC_LABEL_RUNNER_VERSION, METRIC_LABEL_STATUS,
+    METRIC_LABEL_TARGET_NAME, METRIC_LABEL_URL, METRIC_LABEL_URLS, METRIC_VALUE_AVAILABLE,
+    METRIC_VALUE_AVAILABLE_TO_UNAVAILABLE, METRIC_VALUE_UNAVAILABLE,
+    METRIC_VALUE_UNAVAILABLE_TO_AVAILABLE,
+};
 use crate::runner::target::Target;
 use crate::runner::url::vec_to_string;
+use crate::runner::{Event, Status};
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -57,10 +62,16 @@ impl Runner {
             runner.tick(urls, client, wait, &mut status).await;
         });
 
-        self.metrics.status.observe(1, &[
-            KeyValue::new(METRIC_LABEL_RUNNER_VERSION, built_info::PKG_VERSION),
-            KeyValue::new(METRIC_LABEL_RUNNER_STARTED_AT, chrono::Utc::now().to_rfc3339()),
-        ]);
+        self.metrics.status.observe(
+            1,
+            &[
+                KeyValue::new(METRIC_LABEL_RUNNER_VERSION, built_info::PKG_VERSION),
+                KeyValue::new(
+                    METRIC_LABEL_RUNNER_STARTED_AT,
+                    chrono::Utc::now().to_rfc3339(),
+                ),
+            ],
+        );
 
         forever.await?;
 
@@ -204,10 +215,13 @@ impl Runner {
 
         match status.handle_unavailable() {
             Event::AvailableToUnavailable => {
-                self.metrics.events.add(1, &[
-                    KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_AVAILABLE_TO_UNAVAILABLE),
-                    KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
-                ]);
+                self.metrics.events.add(
+                    1,
+                    &[
+                        KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_AVAILABLE_TO_UNAVAILABLE),
+                        KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+                    ],
+                );
                 info!(
                     runner_target = target,
                     url = url.to_string(),
@@ -246,10 +260,13 @@ impl Runner {
 
         match status.handle_available() {
             Event::UnavailableToAvailable(diff) => {
-                self.metrics.events.add(1, &[
-                    KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_UNAVAILABLE_TO_AVAILABLE),
-                    KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
-                ]);
+                self.metrics.events.add(
+                    1,
+                    &[
+                        KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_UNAVAILABLE_TO_AVAILABLE),
+                        KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+                    ],
+                );
                 info!(
                     runner_target = target,
                     url = url.to_string(),
@@ -282,29 +299,41 @@ impl Runner {
             METRIC_VALUE_UNAVAILABLE
         };
 
-        self.metrics.requests.add(1, &[
-            KeyValue::new(METRIC_LABEL_STATUS, status),
-            KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
-            KeyValue::new(METRIC_LABEL_URL, url.to_string()),
-        ]);
+        self.metrics.requests.add(
+            1,
+            &[
+                KeyValue::new(METRIC_LABEL_STATUS, status),
+                KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+                KeyValue::new(METRIC_LABEL_URL, url.to_string()),
+            ],
+        );
 
-        self.metrics.requests_response_time_ns.record(started.elapsed().as_nanos() as f64, &[
-            KeyValue::new(METRIC_LABEL_STATUS, status),
-            KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
-            KeyValue::new(METRIC_LABEL_URL, url.to_string()),
-        ]);
+        self.metrics.requests_response_time_ns.record(
+            started.elapsed().as_nanos() as f64,
+            &[
+                KeyValue::new(METRIC_LABEL_STATUS, status),
+                KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+                KeyValue::new(METRIC_LABEL_URL, url.to_string()),
+            ],
+        );
 
-        self.metrics.target_status.observe(if success { 1 } else { 0 }, &[
-            KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
-            KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_AVAILABLE),
-            KeyValue::new(METRIC_LABEL_URLS, vec_to_string(self.target.urls.clone())),
-        ]);
+        self.metrics.target_status.observe(
+            if success { 1 } else { 0 },
+            &[
+                KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+                KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_AVAILABLE),
+                KeyValue::new(METRIC_LABEL_URLS, vec_to_string(self.target.urls.clone())),
+            ],
+        );
 
-        self.metrics.target_status.observe(if success { 0 } else { 1 }, &[
-            KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
-            KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_UNAVAILABLE),
-            KeyValue::new(METRIC_LABEL_URLS, vec_to_string(self.target.urls.clone())),
-        ]);
+        self.metrics.target_status.observe(
+            if success { 0 } else { 1 },
+            &[
+                KeyValue::new(METRIC_LABEL_TARGET_NAME, target.clone()),
+                KeyValue::new(METRIC_LABEL_STATUS, METRIC_VALUE_UNAVAILABLE),
+                KeyValue::new(METRIC_LABEL_URLS, vec_to_string(self.target.urls.clone())),
+            ],
+        );
     }
 }
 

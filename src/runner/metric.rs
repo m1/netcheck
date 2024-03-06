@@ -1,4 +1,4 @@
-use opentelemetry::{global};
+use opentelemetry::global;
 use opentelemetry::metrics::{Counter, Histogram, ObservableGauge, Unit};
 
 pub const METRIC_LABEL_STATUS: &str = "status";
@@ -27,27 +27,53 @@ impl Default for Metrics {
         let meter = global::meter("netcheck_runner");
 
         Metrics {
-            status: meter.u64_observable_gauge("runner_status").with_description("The status of the netcheck service").with_unit(Unit::new("count")).init(),
-            events: meter.u64_counter("runner_events").with_description("Counter of how many events have taken place").with_unit(Unit::new("count")).init(),
-            requests: meter.u64_counter("runner_requests").with_description("Counter of how many requests have taken place").with_unit(Unit::new("count")).init(),
-            target_status: meter.u64_observable_gauge("runner_target_status").with_description("The status of the target").with_unit(Unit::new("count")).init(),
-            requests_response_time_ns: meter.f64_histogram("runner_requests_response_time_ns").with_description("The time taken to get a response from a request").with_unit(Unit::new("ns")).init(),
+            status: meter
+                .u64_observable_gauge("runner_status")
+                .with_description("The status of the netcheck service")
+                .with_unit(Unit::new("count"))
+                .init(),
+            events: meter
+                .u64_counter("runner_events")
+                .with_description("Counter of how many events have taken place")
+                .with_unit(Unit::new("count"))
+                .init(),
+            requests: meter
+                .u64_counter("runner_requests")
+                .with_description("Counter of how many requests have taken place")
+                .with_unit(Unit::new("count"))
+                .init(),
+            target_status: meter
+                .u64_observable_gauge("runner_target_status")
+                .with_description("The status of the target")
+                .with_unit(Unit::new("count"))
+                .init(),
+            requests_response_time_ns: meter
+                .f64_histogram("runner_requests_response_time_ns")
+                .with_description("The time taken to get a response from a request")
+                .with_unit(Unit::new("ns"))
+                .init(),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use opentelemetry::KeyValue;
-    use crate::built_info;
     use super::*;
+    use crate::built_info;
+    use opentelemetry::KeyValue;
 
     #[test]
     fn test_metrics_default_with_labels() {
         let metrics = Metrics::default();
-        metrics.status.observe(1, &[
-            KeyValue::new(METRIC_LABEL_RUNNER_VERSION, built_info::PKG_VERSION),
-            KeyValue::new(METRIC_LABEL_RUNNER_STARTED_AT, chrono::Utc::now().to_rfc3339()),
-        ]);
+        metrics.status.observe(
+            1,
+            &[
+                KeyValue::new(METRIC_LABEL_RUNNER_VERSION, built_info::PKG_VERSION),
+                KeyValue::new(
+                    METRIC_LABEL_RUNNER_STARTED_AT,
+                    chrono::Utc::now().to_rfc3339(),
+                ),
+            ],
+        );
     }
 }
