@@ -108,7 +108,6 @@ async fn run(
         .lock()
         .expect("Failed to remember our background threads");
 
-    // let mut handles = vec![];
     let targets = args.target;
 
     for target in targets {
