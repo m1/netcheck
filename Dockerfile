@@ -2,7 +2,7 @@
 ARG ALPINE_VERSION=3.19
 ARG RUST_VERSION=1.76.0
 
-FROM docker.io/library/rust:${RUST_VERSION}-alpine${ALPINE_VERSION} as builder
+FROM --platform=$BUILDPLATFORM docker.io/library/rust:${RUST_VERSION}-alpine${ALPINE_VERSION} as builder
 
 RUN apk add --no-cache musl-dev=1.2.4_git20230717-r4 \
                        openssl-dev=3.1.4-r5  \
