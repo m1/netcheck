@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: get docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -36,16 +37,20 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha
+
       - name: setup qemu
         uses: docker/setup-qemu-action@v3
+
       - name: setup docker buildx
         uses: docker/setup-buildx-action@v3
+
       - name: login to dockerhub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: login to ghcr
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
@@ -53,6 +58,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: build and push
         uses: docker/build-push-action@v5
         with:
@@ -61,6 +67,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+
   github:
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
@@ -83,7 +90,9 @@ jobs:
       - uses: actions/checkout@4
         with:
           fetch-depth: 0
+
       - uses: dtolnay/rust-toolchain@stable
+
       - run: |
           if [ "${GITHUB_REF##*/}" = main ]; then
            echo "VERSION=latest" >> "$GITHUB_ENV"
@@ -91,6 +100,7 @@ jobs:
             echo "VERSION=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
           fi
           echo "$VERSION"
+
       - name: compile release
         uses: rust-build/rust-build.action@v1.4.5
         id: release
@@ -103,6 +113,7 @@ jobs:
           UPLOAD_URL: "none"
           ARCHIVE_NAME: netcheck_${{env.RELEASE_VERSION}}_${{matrix.platform}}
           EXTRA_FILES: "README.md LICENSE"
+
       - name: upload artifacts
         uses: softprops/action-gh-release@v1
         id: release-upload
@@ -111,7 +122,7 @@ jobs:
         with:
           name: netcheck_${{env.RELEASE_VERSION}}_${{matrix.platform}}
           tag_name: v${{env.VERSION}}
-          #          body: ${{inputs.new_release_notes}}
+          # body: ${{inputs.new_release_notes}}
           generate_release_notes: true
           prerelease: false
           files: |
