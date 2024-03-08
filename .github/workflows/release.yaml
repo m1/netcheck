@@ -81,7 +81,7 @@ jobs:
           else
             echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
           fi
-          echo $VERSION
+          echo "$VERSION"
       - name: compile release
         uses: rust-build/rust-build.action@v1.4.5
         id: release
