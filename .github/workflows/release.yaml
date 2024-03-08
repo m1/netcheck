@@ -5,10 +5,17 @@ on:
     branches:
       - master
     tags:
-      - "v*.*.*"
+      - "v*"
   pull_request:
     branches:
       - "master"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docker:
@@ -56,6 +63,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
   github:
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -102,7 +111,7 @@ jobs:
         with:
           name: netcheck_${{env.RELEASE_VERSION}}_${{matrix.platform}}
           tag_name: v${{env.VERSION}}
-#          body: ${{inputs.new_release_notes}}
+          #          body: ${{inputs.new_release_notes}}
           generate_release_notes: true
           prerelease: false
           files: |
