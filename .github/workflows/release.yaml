@@ -76,7 +76,7 @@ jobs:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
       - run: |
-          if [ ${GITHUB_REF##*/} = main ]; then
+          if [ "${GITHUB_REF##*/}" = main ]; then
            echo "VERSION=latest" >> $GITHUB_ENV
           else
             echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
