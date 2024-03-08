@@ -103,25 +103,28 @@ jobs:
           fi
           echo "$VERSION"
 
-      - uses: rust-build/rust-build.action@v1.4.4
+      - uses: rust-build/rust-build.action@v1.4.5
         id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          RUSTTARGET: ${{matrix.target}}
-          ARCHIVE_TYPES: ${{matrix.archive}}
+          MINIFY: true
+          RUSTTARGET: ${{ matrix.target }}
+          ARCHIVE_TYPES: ${{ matrix.archive }}
+          ARCHIVE_NAME: netcheck_${{ env.RELEASE_VERSION }}
           EXTRA_FILES: "README.md LICENSE"
+          STATIC_LINKING: false
 
       - uses: softprops/action-gh-release@v1
         id: release-upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{env.VERSION}}
-          tag_name: ${{env.VERSION}}
+          name: ${{ env.VERSION }}
+          tag_name: ${{ env.VERSION }}
           # body: ${{inputs.new_release_notes}}
           generate_release_notes: true
           prerelease: false
           files: |
-            ${{steps.release.outputs.BUILT_ARCHIVE}}
-            ${{steps.release.outputs.BUILT_CHECKSUM}}
+            ${{ steps.release.outputs.BUILT_ARCHIVE }}
+            ${{ steps.release.outputs.BUILT_CHECKSUM }}
