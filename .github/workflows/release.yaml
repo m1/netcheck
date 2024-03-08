@@ -77,10 +77,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: |
           if [ "${GITHUB_REF##*/}" = main ]; then
-           echo "VERSION=latest" >> $GITHUB_ENV
+           echo "VERSION=latest" >> "$GITHUB_ENV"
           else
-            echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+            echo "VERSION=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
           fi
+          echo "$VERSION"
       - name: compile release
         uses: rust-build/rust-build.action@v1.4.5
         id: release
