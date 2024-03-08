@@ -84,7 +84,7 @@ jobs:
             archive: zip
             platform: macos_x86_64
     steps:
-      - uses: actions/checkout@4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
