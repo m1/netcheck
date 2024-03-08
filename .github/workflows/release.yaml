@@ -77,13 +77,10 @@ jobs:
         include:
           - target: x86_64-pc-windows-gnu
             archive: zip
-            platform: windows_x86_64
           - target: x86_64-unknown-linux-musl
             archive: tar.gz tar.bz2 tar.xz
-            platform: linux_x86_64
           - target: x86_64-apple-darwin
             archive: zip
-            platform: macos_x86_64
     steps:
       - uses: actions/checkout@v4
         with:
@@ -106,24 +103,21 @@ jobs:
           fi
           echo "$VERSION"
 
-      - uses: rust-build/rust-build.action@v1.4.5
+      - uses: rust-build/rust-build.action@v1.4.4
         id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          MINIFY: true
           RUSTTARGET: ${{matrix.target}}
           ARCHIVE_TYPES: ${{matrix.archive}}
-          ARCHIVE_NAME: netcheck_${{env.RELEASE_VERSION}}_${{matrix.platform}}
           EXTRA_FILES: "README.md LICENSE"
-          STATIC_LINKING: false
 
       - uses: softprops/action-gh-release@v1
         id: release-upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{env.RELEASE_VERSION}}
+          name: ${{env.VERSION}}
           tag_name: ${{env.VERSION}}
           # body: ${{inputs.new_release_notes}}
           generate_release_notes: true
