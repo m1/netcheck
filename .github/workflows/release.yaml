@@ -79,8 +79,13 @@ jobs:
             archive: zip
           - target: x86_64-unknown-linux-musl
             archive: tar.gz tar.bz2 tar.xz
-          - target: x86_64-apple-darwin
-            archive: zip
+          # @TODO<hello@milescroxford.com> - 2024-03-08: Add support for darwin,
+          #   see: https://github.com/rust-build/rust-build.action/issues/88
+          #
+          # ```
+          # - target: x86_64-apple-darwin
+          #   archive: zip
+          # ```
     steps:
       - uses: actions/checkout@v4
         with:
