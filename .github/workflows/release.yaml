@@ -90,9 +90,9 @@ jobs:
           fetch-depth: 0
 
       - run: |
-          apt-get -y update
-          apt-get install -yqq --no-install-recommends build-essential
-          apt-get install -yqq mingw-w64 clang gcc g++ zlib1g-dev libmpc-dev libmpfr-dev libgmp-dev cmake libxml2-dev libssl-dev zip unzip cmake pkg-config libfontconfig-dev libolm-dev rename
+          sudo apt-get -y update
+          sudo apt-get install -yqq --no-install-recommends build-essential
+          sudo apt-get install -yqq mingw-w64 clang gcc g++ zlib1g-dev libmpc-dev libmpfr-dev libgmp-dev cmake libxml2-dev libssl-dev zip unzip cmake pkg-config libfontconfig-dev libolm-dev rename
 
       - uses: dtolnay/rust-toolchain@stable
 
