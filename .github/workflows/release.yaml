@@ -116,6 +116,7 @@ jobs:
           ARCHIVE_TYPES: ${{matrix.archive}}
           ARCHIVE_NAME: netcheck_${{env.RELEASE_VERSION}}_${{matrix.platform}}
           EXTRA_FILES: "README.md LICENSE"
+          STATIC_LINKING: false
 
       - uses: softprops/action-gh-release@v1
         id: release-upload
