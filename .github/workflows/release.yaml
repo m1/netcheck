@@ -151,5 +151,5 @@ jobs:
             ${{ steps.build_linux.outputs.BUILT_CHECKSUM }}
             ${{ steps.build_windows.outputs.BUILT_ARCHIVE }}
             ${{ steps.build_windows.outputs.BUILT_CHECKSUM }}
-            netcheck_${{ env.VERSION }}-chart.zip
-            netcheck_${{ env.VERSION }}-k8s-manifest.zip
+            netcheck-${{ env.VERSION }}-chart.zip
+            netcheck-${{ env.VERSION }}-k8s-manifest.zip
