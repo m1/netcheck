@@ -59,3 +59,63 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+
+  github:
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            archive: zip
+          - target: x86_64-unknown-linux-musl
+            archive: tar.gz tar.bz2 tar.xz
+          # @TODO<hello@milescroxford.com> - 2024-03-08: Add support for darwin,
+          #   see: https://github.com/rust-build/rust-build.action/issues/88
+          #
+          # ```
+          # - target: x86_64-apple-darwin
+          #   archive: zip
+          # ```
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - run: |
+          if [ "${GITHUB_REF##*/}" = main ]; then
+           echo "VERSION=latest" >> "$GITHUB_ENV"
+           echo "Setting version to latest"
+          else
+            echo "VERSION=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
+            echo "Setting version to ${GITHUB_REF##*/}"
+          fi
+          echo "$VERSION"
+
+      - uses: rust-build/rust-build.action@v1.4.5
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          MINIFY: true
+          RUSTTARGET: ${{ matrix.target }}
+          ARCHIVE_TYPES: ${{ matrix.archive }}
+          ARCHIVE_NAME: netcheck_${{ env.VERSION }}
+          EXTRA_FILES: "README.md LICENSE"
+          STATIC_LINKING: false
+
+      - uses: softprops/action-gh-release@v1
+        id: release-upload
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          generate_release_notes: true
+          prerelease: true
+          files: |
+            ${{ steps.release.outputs.BUILT_ARCHIVE }}
+            ${{ steps.release.outputs.BUILT_CHECKSUM }}
