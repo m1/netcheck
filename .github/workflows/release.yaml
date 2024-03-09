@@ -66,13 +66,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
 
-
-  manifests:
-    if: startsWith(github.ref, 'refs/tags/v')  || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-
-
   publish-release:
     if: startsWith(github.ref, 'refs/tags/v')  || github.event_name == 'workflow_dispatch'
     permissions:
