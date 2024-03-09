@@ -1,9 +1,7 @@
 name: pr-open
 
 on:
-  pull_request_target:
-    types: [ opened, reopened, synchronize ]
-
+  - pull_request_target
 jobs:
   labels:
     runs-on: ubuntu-latest
@@ -11,7 +9,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/labeler@v4
+      - uses: actions/labeler@v5
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labels.yaml
