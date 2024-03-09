@@ -137,18 +137,6 @@ jobs:
           EXTRA_FILES: "README.md LICENSE"
           STATIC_LINKING: false
 
-      - uses: rust-build/rust-build.action@v1.4.5
-        id: build_windows
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          MINIFY: true
-          RUSTTARGET: ${{ matrix.target }}
-          ARCHIVE_TYPES: ${{ matrix.archive }}
-          ARCHIVE_NAME: netcheck_${{ env.VERSION }}
-          EXTRA_FILES: "README.md LICENSE"
-          STATIC_LINKING: false
-
       - uses: azure/setup-helm@v4
         with:
           version: v3.8.0
