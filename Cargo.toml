@@ -24,7 +24,7 @@ clap = { version = "4.5.1", features = ["derive"] }
 metrics = { version = "0.22.1", features = [] }
 metrics-exporter-prometheus = { version = "0.13.1", features = ["http-listener", "tokio"] }
 rand = { version = "0.9.0-alpha.0", features = [] }
-reqwest = { version = "0.11.24", features = [] }
+reqwest = { version = "0.11.25", features = [] }
 thiserror = { version = "1.0.57", features = [] }
 tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros", "time"] }
 tracing = { version = "0.1.40", features = ["log", "std", ] }
