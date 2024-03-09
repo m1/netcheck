@@ -134,7 +134,7 @@ jobs:
         with:
           version: v3.8.0
 
-      - run: helm template chart/netcheck --output-dir ./helm-template
+      - run: helm template charts/netcheck --output-dir ./helm-template
 
       - run: |
           zip netcheck-${{ env.VERSION }}-chart.zip -r chart/netcheck
