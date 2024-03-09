@@ -1,0 +1,20 @@
+feature:
+  - head-branch: [ '^feature', 'feature', 'feat' ]
+
+fix:
+  - head-branch: [ '^fix', 'fix' ]
+
+hotfix:
+  - head-branch: [ '^hotfix', 'hotfix' ]
+
+chore:
+  - head-branch: [ '^chore', 'chore' ]
+
+docs:
+  - head-branch: [ '^docs', 'docs' ]
+
+pre-release:
+  - head-branch: [ '^pre-release', 'pre-release' ]
+
+release:
+  - base-branch: 'main'
