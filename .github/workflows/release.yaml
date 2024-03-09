@@ -9,6 +9,12 @@ on:
   pull_request:
     branches:
       - "master"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        default: 'latest'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -60,8 +66,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
 
-  github:
-    if: startsWith(github.ref, 'refs/tags/v')
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')  || github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -89,16 +95,17 @@ jobs:
 
       - run: |
           if [ "${GITHUB_REF##*/}" = main ]; then
-           echo "VERSION=latest" >> "$GITHUB_ENV"
-           echo "Setting version to latest"
+            echo "VERSION=latest" >> "$GITHUB_ENV"
+            echo "Setting version to latest"
+          elif [ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+            echo "Setting version to ${{ github.event.inputs.version }}"
           else
             echo "VERSION=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
             echo "Setting version to ${GITHUB_REF##*/}"
           fi
-          echo "$VERSION"
-
       - uses: rust-build/rust-build.action@v1.4.5
-        id: release
+        id: build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -109,13 +116,24 @@ jobs:
           EXTRA_FILES: "README.md LICENSE"
           STATIC_LINKING: false
 
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.8.0
+
+      - run: helm template chart/netcheck --output-dir ./helm-template
+
+      - run: |
+          zip netcheck-helm-${{ env.VERSION }}.zip -r chart/netcheck
+          zip netcheck-k8s-manifests-${{ env.VERSION }}.zip -r helm-template/netcheck/templates
+
       - uses: softprops/action-gh-release@v1
-        id: release-upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           generate_release_notes: true
           prerelease: true
           files: |
-            ${{ steps.release.outputs.BUILT_ARCHIVE }}
-            ${{ steps.release.outputs.BUILT_CHECKSUM }}
+            ${{ steps.build.outputs.BUILT_ARCHIVE }}
+            ${{ steps.build.outputs.BUILT_CHECKSUM }}
+            netcheck_${{ env.VERSION }}-chart.zip
+            netcheck_${{ env.VERSION }}-k8s-manifest.zip
