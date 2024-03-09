@@ -147,7 +147,9 @@ jobs:
           generate_release_notes: true
           prerelease: true
           files: |
-            ${{ steps.build.outputs.BUILT_ARCHIVE }}
-            ${{ steps.build.outputs.BUILT_CHECKSUM }}
+            ${{ steps.build_linux.outputs.BUILT_ARCHIVE }}
+            ${{ steps.build_linux.outputs.BUILT_CHECKSUM }}
+            ${{ steps.build_windows.outputs.BUILT_ARCHIVE }}
+            ${{ steps.build_windows.outputs.BUILT_CHECKSUM }}
             netcheck_${{ env.VERSION }}-chart.zip
             netcheck_${{ env.VERSION }}-k8s-manifest.zip
