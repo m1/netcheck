@@ -114,7 +114,7 @@ jobs:
           MINIFY: true
           RUSTTARGET: x86_64-unknown-linux-musl
           ARCHIVE_TYPES: tar.gz tar.bz2 tar.xz
-          ARCHIVE_NAME: netcheck_${{ env.VERSION }}
+          ARCHIVE_NAME: netcheck_${{ env.VERSION }}_linux_x86_64
           EXTRA_FILES: "README.md LICENSE"
           STATIC_LINKING: false
 
@@ -126,7 +126,7 @@ jobs:
           MINIFY: true
           RUSTTARGET: x86_64-pc-windows-gnu
           ARCHIVE_TYPES: zip
-          ARCHIVE_NAME: netcheck_${{ env.VERSION }}
+          ARCHIVE_NAME: netcheck_${{ env.VERSION }}_windows_x86_64
           EXTRA_FILES: "README.md LICENSE"
           STATIC_LINKING: false
 
@@ -137,8 +137,8 @@ jobs:
       - run: helm template charts/netcheck --output-dir ./helm-template
 
       - run: |
-          zip netcheck-${{ env.VERSION }}-chart.zip -r charts/netcheck
-          zip netcheck-${{ env.VERSION }}-k8s-manifests.zip -r helm-template/netcheck/templates
+          cd charts/netcheck; zip ../../netcheck_${{ env.VERSION }}_chart.zip -r *
+          cd helm-template/netcheck/templates; zip ../../../netcheck_${{ env.VERSION }}-k8s-manifests.zip -r *
 
       - uses: softprops/action-gh-release@v1
         env:
@@ -152,4 +152,4 @@ jobs:
             ${{ steps.build_windows.outputs.BUILT_ARCHIVE }}
             ${{ steps.build_windows.outputs.BUILT_CHECKSUM }}
             netcheck-${{ env.VERSION }}-chart.zip
-            netcheck-${{ env.VERSION }}-k8s-manifest.zip
+            netcheck-${{ env.VERSION }}-k8s-manifests.zip
