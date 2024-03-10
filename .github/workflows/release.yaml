@@ -137,8 +137,8 @@ jobs:
       - run: helm template charts/netcheck --output-dir ./helm-template
 
       - run: |
-          cd charts/netcheck; zip ../../netcheck_${{ env.VERSION }}_chart.zip -r ./*
-          cd helm-template/netcheck/templates; zip ../../../netcheck_${{ env.VERSION }}_k8s_manifests.zip -r ./*
+          cd charts/netcheck; zip ../../netcheck_${{ env.VERSION }}_chart.zip -r ./*; cd -
+          cd helm-template/netcheck/templates; zip ../../../netcheck_${{ env.VERSION }}_k8s_manifests.zip -r ./*; cd -
 
       - uses: softprops/action-gh-release@v1
         env:
