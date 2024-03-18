@@ -21,7 +21,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 chrono = { version = "0.4.34", features = [] }
 clap = { version = "4.5.2", features = ["derive"] }
-metrics = { version = "0.22.1", features = [] }
+metrics = { version = "0.22.3", features = [] }
 metrics-exporter-prometheus = { version = "0.13.1", features = ["http-listener", "tokio"] }
 rand = { version = "0.9.0-alpha.0", features = [] }
 reqwest = { version = "0.11.25", features = [] }
